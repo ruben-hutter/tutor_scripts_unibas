@@ -93,7 +93,7 @@ def load_login_data():
         password = cipher.decrypt(ciphertext)
     return email, password
 
-def upload_feedback(driver, path_to_feedback):
+def upload_feedback(driver, path_to_hand_ins):
     '''
     TODO: Implement feedback upload
     
@@ -102,6 +102,11 @@ def upload_feedback(driver, path_to_feedback):
     3. upload feedback file
     4. repeat
     '''
+    # Iterate over directories in path_to_hand_ins
+    for group in os.listdir(path_to_hand_ins):
+        feedback_file = os.path.join(path_to_hand_ins, group, "feedback.pdf")
+        print("Uploading feedback for group", group)
+        print("Feedback file:", feedback_file)
 
 
 def main():
@@ -116,9 +121,9 @@ def main():
     driver = webdriver.Firefox()
     driver.get(link_to_ADAM)
 
-    adam_login(driver)
-
-    navigate_to_homework(driver, homework_number)
+    #adam_login(driver)
+    #navigate_to_homework(driver, homework_number)
+    upload_feedback(driver, path_to_hand_ins)
 
     driver.quit()
 
