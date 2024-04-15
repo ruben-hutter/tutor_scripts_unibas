@@ -1,0 +1,4 @@
+
+# Run
+python adam-script.py init -t sheet01 "Sheet 1.zip"
+python extractor.py
