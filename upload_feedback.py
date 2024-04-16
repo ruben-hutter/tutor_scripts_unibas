@@ -1,6 +1,6 @@
 '''
 Script navigates trough the path_to_hand_ins folder and uploads the
-feedback file to the corresponding student on ADAM.
+feedback file to the corresponding group_id on ADAM.
 
 https://selenium-python.readthedocs.io/api.html
 '''
@@ -19,6 +19,7 @@ from Crypto.Cipher import ChaCha20
 
 HOMEWORK_BASE = 9750
 HAS_HAND_IN = "y"
+SEPARATOR = "----------------------------------------"
 
 def navigate_to_homework(driver, homework_number):
     wait = WebDriverWait(driver, 10)
@@ -94,20 +95,33 @@ def load_login_data():
     return email, password
 
 def upload_feedback(driver, path_to_hand_ins):
-    '''
-    TODO: Implement feedback upload
-    
-    1. iterate over directories in path_to_feedback
-    2. find student in ADAM
-    3. upload feedback file
-    4. repeat
-    '''
     # Iterate over directories in path_to_hand_ins
     for group in os.listdir(path_to_hand_ins):
-        feedback_file = os.path.join(path_to_hand_ins, group, "feedback.pdf")
-        print("Uploading feedback for group", group)
-        print("Feedback file:", feedback_file)
+        feedback_folder_path = os.path.join(path_to_hand_ins, group, "feedback")
+        if not os.path.isdir(feedback_folder_path):
+            continue
 
+        # Find group_id in ADAM
+        group_id = group.split("_")[0]
+
+        # Select pdf version of feedback file
+        feedback_files = os.listdir(feedback_folder_path)
+        feedback_file = None
+        for file in feedback_files:
+            if file.endswith(".pdf"):
+                feedback_file = file
+                break
+        if feedback_file is None:
+            print(f"No feedback file found for group {group_id}.")
+            continue
+
+        # Upload feedback file
+        feedback_path = os.path.join(feedback_folder_path, feedback_file)
+        print(f"Uploading feedback for group {group_id}...")
+        # TODO: Implement upload
+        print(f"Feedback for group {group_id} uploaded.")
+        print(SEPARATOR)
+        print()
 
 def main():
     if (len(sys.argv) < 3):
