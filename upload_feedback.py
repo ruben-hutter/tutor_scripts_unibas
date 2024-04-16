@@ -17,7 +17,6 @@ import json
 from base64 import b64decode
 from Crypto.Cipher import ChaCha20
 
-HOMEWORK_BASE = 9750
 HAS_HAND_IN = "y"
 SEPARATOR = "----------------------------------------"
 
@@ -32,7 +31,9 @@ def navigate_to_homework(driver, homework_number):
         EC.presence_of_element_located((By.ID, "ass_id"))
     )
     selector = Select(assessment_select)
-    selector.select_by_value(str(HOMEWORK_BASE + int(homework_number)))
+    options = selector.options
+    options[int(homework_number)-1].click()
+    input()
     submit_button = wait.until(
         EC.presence_of_element_located((By.NAME, "cmd[selectAssignment]"))
     )
@@ -118,7 +119,14 @@ def upload_feedback(driver, path_to_hand_ins):
         # Upload feedback file
         feedback_path = os.path.join(feedback_folder_path, feedback_file)
         print(f"Uploading feedback for group {group_id}...")
-        # TODO: Implement upload
+
+        wait = WebDriverWait(driver, 10)
+        table = wait.until(
+            EC.presence_of_element_located((By.ID, 'exc_mem'))  # Assuming the table has an ID 'exc_mem'
+        )
+        rows = table.find_elements(By.TAG_NAME, "tr")
+        print(rows)
+
         print(f"Feedback for group {group_id} uploaded.")
         print(SEPARATOR)
         print()
@@ -128,15 +136,15 @@ def main():
         print("Usage: python upload_feedback.py <homework_number> <path_to_hand_ins>")
         return
 
-    link_to_ADAM = "https://adam.unibas.ch/goto_adam_exc_1756561.html"
+    link_to_ADAM = "https://adam.unibas.ch/goto_adam_exc_1744747.html"
     homework_number = sys.argv[1]
     path_to_hand_ins = sys.argv[2]
 
     driver = webdriver.Firefox()
     driver.get(link_to_ADAM)
 
-    #adam_login(driver)
-    #navigate_to_homework(driver, homework_number)
+    adam_login(driver)
+    navigate_to_homework(driver, homework_number)
     upload_feedback(driver, path_to_hand_ins)
 
     driver.quit()
