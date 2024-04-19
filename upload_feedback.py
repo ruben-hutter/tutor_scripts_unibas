@@ -11,6 +11,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import Select
+from selenium.common.exceptions import TimeoutException
 
 import json
 from base64 import b64decode
@@ -100,26 +101,29 @@ def navigate_to_homework(driver, homework_number):
 
 def iterate_over_hand_ins(driver, path_to_hand_ins):
     # Iterate over directories in path_to_hand_ins
-    for group in os.listdir(path_to_hand_ins):
-        feedback_folder_path = os.path.join(path_to_hand_ins, group, "feedback")
-        if not os.path.isdir(feedback_folder_path):
-            continue
+    try:
+        for group in os.listdir(path_to_hand_ins):
+            feedback_folder_path = os.path.join(path_to_hand_ins, group, "feedback")
+            if not os.path.isdir(feedback_folder_path):
+                continue
 
-        # Find group_id_given in ADAM
-        group_id_given = group.split("_")[0]
+            # Find group_id_given in ADAM
+            group_id_given = group.split("_")[0]
 
-        # Select pdf version of feedback file
-        feedback_files = os.listdir(feedback_folder_path)
-        feedback_file = None
-        for file in feedback_files:
-            if file.endswith(".pdf"):
-                feedback_file = file
-                break
-        if feedback_file is None:
-            print(f"No feedback file found for group {group_id_given}.")
-            continue
-        feedback_path = os.path.join(feedback_folder_path, feedback_file)
-        upload_feedback(driver, feedback_path, group_id_given)
+            # Select pdf version of feedback file
+            feedback_files = os.listdir(feedback_folder_path)
+            feedback_file = None
+            for file in feedback_files:
+                if file.endswith(".pdf"):
+                    feedback_file = file
+                    break
+            if feedback_file is None:
+                print(f"No feedback file found for group {group_id_given}.")
+                continue
+            feedback_path = os.path.join(feedback_folder_path, feedback_file)
+            upload_feedback(driver, feedback_path, group_id_given)
+    except FileNotFoundError:
+        print(f"Path {path_to_hand_ins} not found.")
 
 
 def upload_feedback(driver, feedback_path, group_id_given):
@@ -127,30 +131,54 @@ def upload_feedback(driver, feedback_path, group_id_given):
         print(f"Uploading feedback for group {group_id_given}...")
 
         wait = WebDriverWait(driver, 10)
-        table = wait.until(
-            EC.element_to_be_clickable((By.ID, 'exc_mem'))
-        )
-        rows = table.find_elements(By.XPATH, './/tbody/tr')
-        for row in rows:
-            group_id_element = row.find_element(By.XPATH, './/td[2]')
-            group_id = group_id_element.find_element(By.XPATH, './/div').text.strip("()")
+        try:
+            table = wait.until(
+                EC.element_to_be_clickable((By.ID, 'exc_mem'))
+            )
+            rows = table.find_elements(By.XPATH, './/tbody/tr')
+            for row in rows:
+                group_id_element = row.find_element(By.XPATH, './/td[2]')
+                group_id = group_id_element.find_element(By.XPATH, './/div').text.strip("()")
 
-            if group_id == group_id_given:
-                actions_button_element = row.find_element(By.XPATH, './/td[5]')
-                actions_button = actions_button_element.find_element(By.XPATH, './/div/button')
-                actions_button.click()
-                feedback_options = actions_button_element.find_elements(By.XPATH, './/div/ul/li')
-                feedback_per_file_button = feedback_options[2]
-                feedback_per_file_button.click()
-                _upload_feedback(driver, feedback_path)
+                if group_id == group_id_given:
+                    actions_element = row.find_element(By.XPATH, './/td[5]')
+                    actions_button = actions_element.find_element(By.XPATH, './/div/button')
+                    actions_button.click()
+                    feedback_options = actions_element.find_elements(By.XPATH, './/div/ul/li')
+                    feedback_per_file_button = feedback_options[2]
+                    feedback_per_file_button.click()
+                    _upload_feedback(driver, feedback_path)
 
-        print(f"Feedback for group {group_id_given} uploaded.")
-        print(SEPARATOR)
-        print()
+            print(f"Feedback for group {group_id_given} uploaded.")
+            print(SEPARATOR)
+            print()
+        except TimeoutException as e:
+            print(f'Could not upload feedback for group {group_id_given}.')
+            print(e)
 
 
 def _upload_feedback(driver, feedback_path):
-    input()
+    wait = WebDriverWait(driver, 10)
+    try:
+        feedback_input = wait.until(
+            EC.presence_of_element_located((By.XPATH, '//*[@id="new_file"]'))
+        )
+        feedback_input.send_keys(feedback_path)
+        submit_button = wait.until(
+            EC.element_to_be_clickable((By.NAME, "cmd[uploadFile]"))
+        )
+        submit_button.click()
+        '''
+        TODO: Test if back button works and if iteration over groups continues
+        after going back to previous page.
+        Eventually need to reload elements, and not just access them by relative xpath.
+        '''
+        go_back_button = wait.until(
+            EC.element_to_be_clickable((By.XPATH, '/html/body/div[1]/main/div/div/div/div/div/ul/li[1]/a'))
+        )
+        go_back_button.click()
+    except TimeoutException:
+        raise TimeoutException("Timeout while uploading feedback file.")
 
 
 def main():
