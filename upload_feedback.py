@@ -50,18 +50,18 @@ def adam_login(driver):
 
     wait = WebDriverWait(driver, 10)
     email_field = wait.until(
-        EC.presence_of_element_located((By.XPATH, '//*[@id="username"]'))
+        EC.element_to_be_clickable((By.XPATH, '//*[@id="username"]'))
     )
     login_button = wait.until(
-        EC.presence_of_element_located((By.XPATH, '//*[@id="login-button"]'))
+        EC.element_to_be_clickable((By.XPATH, '//*[@id="login-button"]'))
     )
     email_field.send_keys(email)
     login_button.click()
     password_field = wait.until(
-        EC.presence_of_element_located((By.XPATH, '//*[@id="password"]'))
+        EC.element_to_be_clickable((By.XPATH, '//*[@id="password"]'))
     )
     login_button = wait.until(
-        EC.presence_of_element_located((By.XPATH, '//*[@id="login-button"]'))
+        EC.element_to_be_clickable((By.XPATH, '//*[@id="login-button"]'))
     )
     password_field.send_keys(password.decode("utf-8"))
     login_button.click()
@@ -72,28 +72,28 @@ def adam_login(driver):
 def navigate_to_homework(driver, homework_number):
     wait = WebDriverWait(driver, 10)
     grades_tab = wait.until(
-        EC.presence_of_element_located((By.ID, "tab_grades"))
+        EC.element_to_be_clickable((By.ID, "tab_grades"))
     )
     grades_tab.click()
 
     assessment_select = wait.until(
-        EC.presence_of_element_located((By.ID, "ass_id"))
+        EC.element_to_be_clickable((By.ID, "ass_id"))
     )
     selector = Select(assessment_select)
     options = selector.options
     options[int(homework_number)-1].click()
     submit_button = wait.until(
-        EC.presence_of_element_located((By.NAME, "cmd[selectAssignment]"))
+        EC.element_to_be_clickable((By.NAME, "cmd[selectAssignment]"))
     )
     submit_button.click()
 
     filter_has_hand_in = wait.until(
-        EC.presence_of_element_located((By.ID, "flt_subm"))
+        EC.element_to_be_clickable((By.ID, "flt_subm"))
     )
     selector = Select(filter_has_hand_in)
     selector.select_by_value(HAS_HAND_IN)
     apply_filter = wait.until(
-        EC.presence_of_element_located((By.NAME, "cmd[membersApply]"))
+        EC.element_to_be_clickable((By.NAME, "cmd[membersApply]"))
     )
     apply_filter.click()
 
@@ -128,7 +128,7 @@ def upload_feedback(driver, feedback_path, group_id_given):
 
         wait = WebDriverWait(driver, 10)
         table = wait.until(
-            EC.presence_of_element_located((By.ID, 'exc_mem'))
+            EC.element_to_be_clickable((By.ID, 'exc_mem'))
         )
         rows = table.find_elements(By.XPATH, './/tbody/tr')
         for row in rows:
@@ -139,7 +139,9 @@ def upload_feedback(driver, feedback_path, group_id_given):
                 actions_button_element = row.find_element(By.XPATH, './/td[5]')
                 actions_button = actions_button_element.find_element(By.XPATH, './/div/button')
                 actions_button.click()
-                # TODO: click on the "Rückmeldung per Datei" button
+                feedback_options = actions_button_element.find_elements(By.XPATH, './/div/ul/li')
+                feedback_per_file_button = feedback_options[2]
+                feedback_per_file_button.click()
                 _upload_feedback(driver, feedback_path)
 
         print(f"Feedback for group {group_id_given} uploaded.")
