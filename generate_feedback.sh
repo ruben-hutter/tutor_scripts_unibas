@@ -10,7 +10,7 @@ fi
 directory_path="$1"
 
 # Iterate through each directory in the provided directory
-for group_dir in "$directory_path"/*/; do
+for group_dir in "$directory_path"*/; do
     feedback_dir="${group_dir}feedback"
 
     # Check if the feedback directory exists
@@ -25,7 +25,8 @@ for group_dir in "$directory_path"/*/; do
         feedback_pdf_todo=$(find "$feedback_dir" -name "feedback_*.pdf.todo")
         if [ -n "$feedback_pdf_todo" ]; then
             feedback_basename=$(basename "$feedback_pdf_todo" .pdf.todo)
-            mv "$feedback_pdf_todo" "$feedback_dir/$feedback_basename.md"
+            rm "$feedback_pdf_todo"
+            cp "$directory_path/../$feedback_basename.md" "$feedback_dir"
             feedback_md="$feedback_dir/$feedback_basename.md"
         fi
     fi
