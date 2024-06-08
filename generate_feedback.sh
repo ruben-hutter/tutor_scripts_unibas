@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 # Check if the user provided a directory path
 if [ $# -eq 0 ]; then
@@ -19,16 +19,14 @@ for group_dir in "$directory_path"*/; do
         continue
     fi
 
-    # Check if feedback_*.md exists, if not, rename feedback_*.pdf.todo to feedback_*.md
-    feedback_md=$(find "$feedback_dir" -name "feedback_*.md")
-    if [ -z "$feedback_md" ]; then
-        feedback_pdf_todo=$(find "$feedback_dir" -name "feedback_*.pdf.todo")
-        if [ -n "$feedback_pdf_todo" ]; then
-            feedback_basename=$(basename "$feedback_pdf_todo" .pdf.todo)
-            rm "$feedback_pdf_todo"
-            cp "$directory_path/../$feedback_basename.md" "$feedback_dir"
-            feedback_md="$feedback_dir/$feedback_basename.md"
-        fi
+    # Check if feedback_*.md exists, if not, copy it from the parent directory
+    feedback_md=$(find "$feedback_dir" -maxdepth 1 -name "feedback_*.md" -print -quit)
+    feedback_pdf_todo=$(find "$feedback_dir" -maxdepth 1 -name "feedback_*.pdf.todo" -print -quit)
+    if [ -z "$feedback_md" ] && [ -n "$feedback_pdf_todo" ]; then
+        feedback_basename=$(basename "$feedback_pdf_todo" .pdf.todo)
+        rm "$feedback_pdf_todo"
+        cp "$directory_path/../$feedback_basename.md" "$feedback_dir"
+        feedback_md="$feedback_dir/$feedback_basename.md"
     fi
 
     # Iterate through each feedback file in the feedback directory and
@@ -40,8 +38,8 @@ for group_dir in "$directory_path"*/; do
     done
 
     # Convert feedback_*.md to feedback_*.pdf
-    feedback_pdf=$(basename "$feedback_md" .md).pdf
-    pandoc "$feedback_md" -o "$feedback_dir/$feedback_pdf"
+    feedback_pdf="${feedback_md%.md}.pdf"
+    pandoc "$feedback_md" -o "$feedback_pdf"
 done
 
 echo "Conversion complete."
